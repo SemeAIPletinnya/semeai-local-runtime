@@ -49,3 +49,30 @@ def append_memory_turn(
     save_session_memory(memory)
 
     return memory
+
+
+def format_memory_summary(
+    memory: list[dict[str, Any]],
+    max_preview: int = 5,
+) -> str:
+    """Format persistent runtime memory as readable summary."""
+    if not memory:
+        return "Persistent memory is empty."
+
+    lines: list[str] = []
+
+    lines.append(f"persistent_turns: {len(memory)}")
+    lines.append("")
+
+    preview = memory[-max_preview:]
+
+    for index, item in enumerate(preview, start=1):
+        user = item.get("user", "")
+        semeai = item.get("semeai", "")
+
+        lines.append(f"Memory turn {index}")
+        lines.append(f"User: {user}")
+        lines.append(f"SemeAi: {semeai}")
+        lines.append("")
+
+    return "\n".join(lines)
