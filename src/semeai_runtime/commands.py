@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
+from semeai_runtime.capabilities import format_capability_manifest
 from semeai_runtime.config import format_runtime_config
 from semeai_runtime.policy import format_policy_registry
 from semeai_runtime.runtime_mode import format_runtime_modes
@@ -38,6 +39,17 @@ def config_command(_: str) -> CommandResult:
         output=format_runtime_config(),
         tool_name="runtime_config",
         tool_input="active_runtime_config",
+    )
+
+
+def capabilities_command(_: str) -> CommandResult:
+    """Inspect runtime capability manifest."""
+    return CommandResult(
+        handled=True,
+        command_name="/capabilities",
+        output=format_capability_manifest(),
+        tool_name="runtime_capabilities",
+        tool_input="runtime_capability_manifest",
     )
 
 
@@ -129,6 +141,12 @@ COMMAND_SPECS: dict[str, CommandSpec] = {
         description="Inspect active runtime configuration.",
         tool_name="runtime_config",
         handler=config_command,
+    ),
+    "/capabilities": CommandSpec(
+        name="/capabilities",
+        description="Inspect runtime capability manifests.",
+        tool_name="runtime_capabilities",
+        handler=capabilities_command,
     ),
     "/mode": CommandSpec(
         name="/mode",
@@ -237,6 +255,9 @@ def handle_command(prompt: str) -> CommandResult:
 
     if prompt == "/config":
         return COMMAND_SPECS["/config"].handler(prompt)
+
+    if prompt == "/capabilities":
+        return COMMAND_SPECS["/capabilities"].handler(prompt)
 
     if prompt == "/mode":
         return COMMAND_SPECS["/mode"].handler(prompt)
