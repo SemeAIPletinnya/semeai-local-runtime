@@ -15,12 +15,14 @@ def load_events(path: Path = DEFAULT_LOG_PATH) -> list[dict[str, Any]]:
         return []
 
     events: list[dict[str, Any]] = []
+
     with path.open("r", encoding="utf-8") as handle:
         for line in handle:
             line = line.strip()
             if not line:
                 continue
             events.append(json.loads(line))
+
     return events
 
 
@@ -33,15 +35,29 @@ def group_by_session(events: list[dict[str, Any]]) -> dict[str, list[dict[str, A
         grouped[session_id].append(event)
 
     for session_events in grouped.values():
-        session_events.sort(key=lambda item: int(item.get("turn_index", 0)))
+        session_events.sort(key=lambda item: int(item.get("turn_index", 0) or 0))
 
     return dict(grouped)
 
 
-def print_session_trace(events: list[dict[str, Any]]) -> None:
-    """Print grouped runtime events as a readable trace."""
-    grouped = group_by_session(events)
+def print_summary(grouped: dict[str, list[dict[str, Any]]]) -> None:
+    """Print a compact runtime replay summary."""
+    total_sessions = len(grouped)
+    total_turns = sum(len(events) for events in grouped.values())
 
+    print("Runtime Replay Summary")
+    print("----------------------")
+    print(f"total_sessions: {total_sessions}")
+    print(f"total_turns: {total_turns}")
+
+    for session_id, events in grouped.items():
+        print(f"session {session_id}: {len(events)} turn(s)")
+
+    print()
+
+
+def print_session_trace(grouped: dict[str, list[dict[str, Any]]]) -> None:
+    """Print grouped runtime events as a readable trace."""
     if not grouped:
         print("No runtime events found.")
         return
@@ -65,7 +81,11 @@ def print_session_trace(events: list[dict[str, Any]]) -> None:
 
 def main() -> int:
     events = load_events()
-    print_session_trace(events)
+    grouped = group_by_session(events)
+
+    print_summary(grouped)
+    print_session_trace(grouped)
+
     return 0
 
 
