@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
+from semeai_runtime.policy import format_policy_registry
 from semeai_runtime.session_memory import (
     format_memory_summary,
     load_session_memory,
@@ -38,6 +39,17 @@ def memory_command(_: str) -> CommandResult:
         output=result,
         tool_name="memory_inspection",
         tool_input="persistent_runtime_memory",
+    )
+
+
+def policies_command(_: str) -> CommandResult:
+    """Inspect active runtime policy registry."""
+    return CommandResult(
+        handled=True,
+        command_name="/policies",
+        output=format_policy_registry(),
+        tool_name="policy_registry",
+        tool_input="active_runtime_policies",
     )
 
 
@@ -93,6 +105,12 @@ COMMAND_SPECS: dict[str, CommandSpec] = {
         description="Inspect persistent runtime memory.",
         tool_name="memory_inspection",
         handler=memory_command,
+    ),
+    "/policies": CommandSpec(
+        name="/policies",
+        description="Inspect active runtime policy rules.",
+        tool_name="policy_registry",
+        handler=policies_command,
     ),
     "/read": CommandSpec(
         name="/read <path>",
@@ -183,6 +201,9 @@ def handle_command(prompt: str) -> CommandResult:
 
     if prompt == "/memory":
         return COMMAND_SPECS["/memory"].handler(prompt)
+
+    if prompt == "/policies":
+        return COMMAND_SPECS["/policies"].handler(prompt)
 
     if prompt.startswith("/read "):
         return COMMAND_SPECS["/read"].handler(prompt)
