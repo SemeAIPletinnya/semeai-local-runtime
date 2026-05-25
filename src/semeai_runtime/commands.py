@@ -19,41 +19,12 @@ class CommandResult:
     tool_input: str
 
 
-CommandHandler = Callable[[str], CommandResult]
-
-
-def help_command(_: str) -> CommandResult:
-    """Return runtime help."""
-    return CommandResult(
-        handled=True,
-        command_name="/help",
-        output=(
-            "Available commands:\n"
-            "/help - show runtime help\n"
-            "/tools - list controlled runtime tools\n"
-            "/memory - inspect persistent runtime memory\n"
-            "/read <path> - read an allowed local file\n"
-            "exit / quit - stop the runtime"
-        ),
-        tool_name="runtime_help",
-        tool_input="",
-    )
-
-
-def tools_command(_: str) -> CommandResult:
-    """Return controlled tool list."""
-    return CommandResult(
-        handled=True,
-        command_name="/tools",
-        output=(
-            "Controlled tools:\n"
-            "- read_allowed_file: reads approved local files only\n"
-            "- memory_inspection: summarizes persistent runtime memory\n"
-            "- runtime_help: shows available runtime commands"
-        ),
-        tool_name="runtime_tools",
-        tool_input="",
-    )
+@dataclass(frozen=True)
+class CommandSpec:
+    name: str
+    description: str
+    tool_name: str
+    handler: Callable[[str], CommandResult]
 
 
 def memory_command(_: str) -> CommandResult:
@@ -93,6 +64,95 @@ def read_command(prompt: str) -> CommandResult:
     )
 
 
+def unavailable_direct_command(prompt: str) -> CommandResult:
+    """Placeholder for commands handled directly by metadata commands."""
+    return CommandResult(
+        handled=False,
+        command_name="",
+        output=f"Command not directly available: {prompt}",
+        tool_name="",
+        tool_input="",
+    )
+
+
+COMMAND_SPECS: dict[str, CommandSpec] = {
+    "/help": CommandSpec(
+        name="/help",
+        description="Show runtime help and available commands.",
+        tool_name="runtime_help",
+        handler=unavailable_direct_command,
+    ),
+    "/tools": CommandSpec(
+        name="/tools",
+        description="List controlled runtime tools exposed through the command registry.",
+        tool_name="runtime_tools",
+        handler=unavailable_direct_command,
+    ),
+    "/memory": CommandSpec(
+        name="/memory",
+        description="Inspect persistent runtime memory.",
+        tool_name="memory_inspection",
+        handler=memory_command,
+    ),
+    "/read": CommandSpec(
+        name="/read <path>",
+        description="Read an approved local file through controlled file inspection.",
+        tool_name="read_allowed_file",
+        handler=read_command,
+    ),
+}
+
+
+def format_help() -> str:
+    """Build help text from command metadata."""
+    lines = ["Available commands:"]
+
+    for spec in COMMAND_SPECS.values():
+        lines.append(f"{spec.name} - {spec.description}")
+
+    lines.append("exit / quit - stop the runtime")
+
+    return "\n".join(lines)
+
+
+def format_tools() -> str:
+    """Build controlled tool list from command metadata."""
+    lines = ["Controlled tools:"]
+
+    seen: set[str] = set()
+
+    for spec in COMMAND_SPECS.values():
+        if spec.tool_name in seen:
+            continue
+
+        seen.add(spec.tool_name)
+        lines.append(f"- {spec.tool_name}: {spec.description}")
+
+    return "\n".join(lines)
+
+
+def help_command(_: str) -> CommandResult:
+    """Return runtime help."""
+    return CommandResult(
+        handled=True,
+        command_name="/help",
+        output=format_help(),
+        tool_name="runtime_help",
+        tool_input="",
+    )
+
+
+def tools_command(_: str) -> CommandResult:
+    """Return controlled tool list."""
+    return CommandResult(
+        handled=True,
+        command_name="/tools",
+        output=format_tools(),
+        tool_name="runtime_tools",
+        tool_input="",
+    )
+
+
 def unknown_slash_command(prompt: str) -> CommandResult:
     """Handle unknown slash commands."""
     if not prompt.startswith("/"):
@@ -115,17 +175,16 @@ def unknown_slash_command(prompt: str) -> CommandResult:
 
 def handle_command(prompt: str) -> CommandResult:
     """Dispatch runtime slash commands."""
-    exact_handlers: dict[str, CommandHandler] = {
-        "/help": help_command,
-        "/tools": tools_command,
-        "/memory": memory_command,
-    }
+    if prompt == "/help":
+        return help_command(prompt)
 
-    if prompt in exact_handlers:
-        return exact_handlers[prompt](prompt)
+    if prompt == "/tools":
+        return tools_command(prompt)
 
-    read_result = read_command(prompt)
-    if read_result.handled:
-        return read_result
+    if prompt == "/memory":
+        return COMMAND_SPECS["/memory"].handler(prompt)
+
+    if prompt.startswith("/read "):
+        return COMMAND_SPECS["/read"].handler(prompt)
 
     return unknown_slash_command(prompt)
