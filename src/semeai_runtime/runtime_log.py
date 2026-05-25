@@ -13,6 +13,8 @@ def write_runtime_event(
     candidate: str,
     decision: str,
     reason: str,
+    session_id: str,
+    turn_index: int,
     path: Path = Path("outputs/runtime_log.jsonl"),
 ) -> None:
     """Append a runtime decision event to a local JSONL log."""
@@ -20,6 +22,8 @@ def write_runtime_event(
 
     event: dict[str, Any] = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "session_id": session_id,
+        "turn_index": turn_index,
         "prompt": prompt,
         "model": model,
         "candidate": candidate,
