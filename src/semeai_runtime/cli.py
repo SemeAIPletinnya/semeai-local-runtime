@@ -5,9 +5,24 @@ from uuid import uuid4
 from semeai_runtime.control_gate import evaluate_candidate
 from semeai_runtime.model_client import generate_candidate
 from semeai_runtime.runtime_log import write_runtime_event
+from semeai_runtime.tools import read_allowed_file
 
 
 EXIT_COMMANDS = {"exit", "quit", "/exit", "/quit"}
+
+
+def handle_tool_command(prompt: str) -> bool:
+    """Handle controlled runtime tool commands."""
+    if not prompt.startswith("/read "):
+        return False
+
+    path = prompt[len("/read "):].strip()
+
+    print("\nTool result")
+    print("-----------")
+    print(read_allowed_file(path))
+
+    return True
 
 
 def run_once(
@@ -21,6 +36,7 @@ def run_once(
         prompt,
         conversation_history=conversation_history,
     )
+
     gate = evaluate_candidate(response.candidate)
 
     write_runtime_event(
@@ -60,12 +76,14 @@ def run_once(
 def main() -> int:
     session_id = str(uuid4())
     turn_index = 0
+
     conversation_history: list[dict[str, str]] = []
 
     print("SemeAi Local Runtime")
     print("--------------------")
     print(f"Session: {session_id}")
-    print("Type 'exit' or 'quit' to stop.\n")
+    print("Type 'exit' or 'quit' to stop.")
+    print("Use '/read <path>' for controlled file inspection.\n")
 
     while True:
         prompt = input("You: ").strip()
@@ -77,7 +95,12 @@ def main() -> int:
             print("SemeAi runtime stopped.")
             return 0
 
+        if handle_tool_command(prompt):
+            print()
+            continue
+
         turn_index += 1
+
         released_output = run_once(
             prompt,
             session_id=session_id,
