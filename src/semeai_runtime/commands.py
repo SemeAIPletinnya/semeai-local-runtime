@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from semeai_runtime.policy import format_policy_registry
+from semeai_runtime.runtime_mode import format_runtime_modes
 from semeai_runtime.session_memory import (
     format_memory_summary,
     load_session_memory,
@@ -39,6 +40,17 @@ def memory_command(_: str) -> CommandResult:
         output=result,
         tool_name="memory_inspection",
         tool_input="persistent_runtime_memory",
+    )
+
+
+def mode_command(_: str) -> CommandResult:
+    """Inspect active runtime mode."""
+    return CommandResult(
+        handled=True,
+        command_name="/mode",
+        output=format_runtime_modes(),
+        tool_name="runtime_mode",
+        tool_input="active_runtime_mode",
     )
 
 
@@ -99,6 +111,12 @@ COMMAND_SPECS: dict[str, CommandSpec] = {
         description="List controlled runtime tools exposed through the command registry.",
         tool_name="runtime_tools",
         handler=unavailable_direct_command,
+    ),
+    "/mode": CommandSpec(
+        name="/mode",
+        description="Inspect the active runtime execution mode.",
+        tool_name="runtime_mode",
+        handler=mode_command,
     ),
     "/memory": CommandSpec(
         name="/memory",
@@ -198,6 +216,9 @@ def handle_command(prompt: str) -> CommandResult:
 
     if prompt == "/tools":
         return tools_command(prompt)
+
+    if prompt == "/mode":
+        return COMMAND_SPECS["/mode"].handler(prompt)
 
     if prompt == "/memory":
         return COMMAND_SPECS["/memory"].handler(prompt)

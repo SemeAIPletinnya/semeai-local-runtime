@@ -25,9 +25,9 @@ def test_read_policy_denies_memory_path() -> None:
     assert decision.allowed is False
 
 
-def test_policy_registry_mentions_allowed_files() -> None:
+def test_policy_registry_mentions_runtime_mode() -> None:
     text = format_policy_registry()
 
-    assert "Active runtime policy rules:" in text
+    assert "runtime_mode:" in text
+    assert "Allowed read files for active mode:" in text
     assert "README.md" in text
-    assert "docs/architecture.md" in text
