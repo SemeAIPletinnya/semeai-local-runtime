@@ -5,6 +5,10 @@ from uuid import uuid4
 from semeai_runtime.control_gate import evaluate_candidate
 from semeai_runtime.model_client import generate_candidate
 from semeai_runtime.runtime_log import write_runtime_event, write_tool_event
+from semeai_runtime.session_memory import (
+    append_memory_turn,
+    load_session_memory,
+)
 from semeai_runtime.tools import read_allowed_file
 
 
@@ -92,13 +96,21 @@ def main() -> int:
     session_id = str(uuid4())
     turn_index = 0
 
-    conversation_history: list[dict[str, str]] = []
+    conversation_history = load_session_memory()
 
     print("SemeAi Local Runtime")
     print("--------------------")
     print(f"Session: {session_id}")
     print("Type 'exit' or 'quit' to stop.")
-    print("Use '/read <path>' for controlled file inspection.\n")
+    print("Use '/read <path>' for controlled file inspection.")
+
+    if conversation_history:
+        print(
+            f"Loaded persistent memory: "
+            f"{len(conversation_history)} turn(s).\n"
+        )
+    else:
+        print("No persistent memory loaded.\n")
 
     while True:
         prompt = input("You: ").strip()
@@ -117,12 +129,6 @@ def main() -> int:
             session_id=session_id,
             turn_index=turn_index,
         ):
-            conversation_history.append(
-                {
-                    "user": prompt,
-                    "semeai": "[tool result logged]",
-                }
-            )
             print()
             continue
 
@@ -133,11 +139,9 @@ def main() -> int:
             conversation_history=conversation_history,
         )
 
-        conversation_history.append(
-            {
-                "user": prompt,
-                "semeai": released_output,
-            }
+        conversation_history = append_memory_turn(
+            user=prompt,
+            semeai=released_output,
         )
 
         print()
