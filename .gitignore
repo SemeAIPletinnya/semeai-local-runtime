@@ -216,3 +216,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+# SemeAi local runtime artifacts
+outputs/
+data/memory/
+data/sessions/
+*.jsonl
+
+# Local model / runtime scratch
+.local/
+runtime_logs/
