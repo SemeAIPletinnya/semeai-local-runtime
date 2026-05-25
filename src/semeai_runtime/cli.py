@@ -2,12 +2,21 @@ from __future__ import annotations
 
 from semeai_runtime.control_gate import evaluate_candidate
 from semeai_runtime.model_client import generate_candidate
+from semeai_runtime.runtime_log import write_runtime_event
 
 
 def main() -> int:
     prompt = input("You: ")
     response = generate_candidate(prompt)
     gate = evaluate_candidate(response.candidate)
+
+    write_runtime_event(
+        prompt=prompt,
+        model=response.model,
+        candidate=response.candidate,
+        decision=gate.decision,
+        reason=gate.reason,
+    )
 
     print("\nCandidate generated")
     print("-------------------")
