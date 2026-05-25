@@ -2,19 +2,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
-ALLOWED_FILES = {
-    "README.md",
-    "docs/architecture.md",
-}
+from semeai_runtime.policy import MAX_READ_CHARS, evaluate_read_policy, normalize_path
 
 
-def read_allowed_file(path: str, max_chars: int = 4000) -> str:
-    """Read a runtime-approved local file."""
-    normalized = path.replace("\\", "/")
+def read_allowed_file(path: str, max_chars: int = MAX_READ_CHARS) -> str:
+    """Read a runtime-approved local file after policy evaluation."""
+    normalized = normalize_path(path)
+    decision = evaluate_read_policy(normalized)
 
-    if normalized not in ALLOWED_FILES:
-        return f"Access denied: {normalized}"
+    if not decision.allowed:
+        return f"Access denied: {normalized} ({decision.reason})"
 
     file_path = Path(normalized)
 
