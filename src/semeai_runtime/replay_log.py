@@ -40,22 +40,50 @@ def group_by_session(events: list[dict[str, Any]]) -> dict[str, list[dict[str, A
     return dict(grouped)
 
 
+def infer_tool_policy_outcome(event: dict[str, Any]) -> str:
+    """Infer a policy-like outcome from a tool event result."""
+    result = str(event.get("tool_result", ""))
+
+    if result.startswith("Access denied:"):
+        return "DENIED"
+
+    if result.startswith("File not found:"):
+        return "ALLOWED_BUT_NOT_FOUND"
+
+    if not result.strip():
+        return "UNKNOWN_EMPTY_RESULT"
+
+    return "ALLOWED"
+
+
 def print_summary(grouped: dict[str, list[dict[str, Any]]]) -> None:
     """Print a compact runtime replay summary."""
     total_sessions = len(grouped)
     total_turns = sum(len(events) for events in grouped.values())
-    total_tool_calls = sum(
-        1
-        for events in grouped.values()
-        for event in events
-        if event.get("event_type") == "tool_call"
-    )
-    total_model_decisions = sum(
-        1
-        for events in grouped.values()
-        for event in events
-        if event.get("event_type", "model_decision") == "model_decision"
-    )
+
+    total_tool_calls = 0
+    total_tool_allowed = 0
+    total_tool_denied = 0
+    total_tool_allowed_not_found = 0
+
+    total_model_decisions = 0
+
+    for events in grouped.values():
+        for event in events:
+            event_type = event.get("event_type", "model_decision")
+
+            if event_type == "tool_call":
+                total_tool_calls += 1
+                outcome = infer_tool_policy_outcome(event)
+
+                if outcome == "DENIED":
+                    total_tool_denied += 1
+                elif outcome == "ALLOWED_BUT_NOT_FOUND":
+                    total_tool_allowed_not_found += 1
+                elif outcome == "ALLOWED":
+                    total_tool_allowed += 1
+            else:
+                total_model_decisions += 1
 
     print("Runtime Replay Summary")
     print("----------------------")
@@ -63,6 +91,9 @@ def print_summary(grouped: dict[str, list[dict[str, Any]]]) -> None:
     print(f"total_turns: {total_turns}")
     print(f"model_decisions: {total_model_decisions}")
     print(f"tool_calls: {total_tool_calls}")
+    print(f"tool_allowed: {total_tool_allowed}")
+    print(f"tool_denied: {total_tool_denied}")
+    print(f"tool_allowed_not_found: {total_tool_allowed_not_found}")
 
     for session_id, events in grouped.items():
         print(f"session {session_id}: {len(events)} event(s)")
@@ -81,9 +112,12 @@ def print_model_decision(event: dict[str, Any]) -> None:
 
 def print_tool_call(event: dict[str, Any]) -> None:
     """Print a tool call event."""
+    outcome = infer_tool_policy_outcome(event)
+
     print(f"Tool: {event.get('tool_name')}")
     print(f"Command: {event.get('command')}")
     print(f"Input: {event.get('tool_input')}")
+    print(f"Policy outcome: {outcome}")
     print(f"Result: {event.get('tool_result')}")
 
 
