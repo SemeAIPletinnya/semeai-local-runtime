@@ -1,0 +1,6 @@
+{
+  "mode": "SAFE",
+  "max_memory_turns": 20,
+  "max_read_chars": 4000,
+  "replay_enabled": true
+}

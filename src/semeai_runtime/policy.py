@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from semeai_runtime.config import load_runtime_config
 from semeai_runtime.runtime_mode import get_runtime_mode
 
-
-MAX_READ_CHARS = 4000
 
 ALLOWED_READ_FILES_BY_MODE = {
     "SAFE": {
@@ -17,6 +16,7 @@ ALLOWED_READ_FILES_BY_MODE = {
         "docs/architecture.md",
         "src/semeai_runtime/policy.py",
         "src/semeai_runtime/commands.py",
+        "src/semeai_runtime/config.py",
     },
     "STRICT": {
         "README.md",
@@ -70,7 +70,7 @@ POLICY_RULES: dict[str, PolicyRule] = {
     ),
     "max_read_chars": PolicyRule(
         name="max_read_chars",
-        description=f"Limit file read output to {MAX_READ_CHARS} characters.",
+        description="Limit file read output using runtime config max_read_chars.",
         applies_to="read_allowed_file",
     ),
 }
@@ -85,6 +85,11 @@ def allowed_read_files() -> set[str]:
     """Return allowed read files for the active runtime mode."""
     mode = get_runtime_mode()
     return set(ALLOWED_READ_FILES_BY_MODE.get(mode, ALLOWED_READ_FILES_BY_MODE["SAFE"]))
+
+
+def max_read_chars() -> int:
+    """Return configured maximum read size."""
+    return load_runtime_config().max_read_chars
 
 
 def evaluate_read_policy(path: str) -> PolicyDecision:
@@ -117,6 +122,7 @@ def format_policy_registry() -> str:
 
     lines = ["Active runtime policy rules:"]
     lines.append(f"runtime_mode: {mode}")
+    lines.append(f"max_read_chars: {max_read_chars()}")
     lines.append("")
 
     for rule in POLICY_RULES.values():

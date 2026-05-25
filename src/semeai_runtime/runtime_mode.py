@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
+from semeai_runtime.config import load_runtime_config
+
 
 VALID_MODES = {"SAFE", "DEVELOPMENT", "STRICT"}
 DEFAULT_MODE = "SAFE"
@@ -31,13 +33,18 @@ RUNTIME_MODES: dict[str, RuntimeMode] = {
 
 
 def get_runtime_mode() -> str:
-    """Return the active runtime mode from environment."""
-    value = os.getenv("SEMEAI_RUNTIME_MODE", DEFAULT_MODE).upper().strip()
+    """Return the active runtime mode from env or config."""
+    env_value = os.getenv("SEMEAI_RUNTIME_MODE")
 
-    if value not in VALID_MODES:
+    if env_value:
+        mode = env_value.upper().strip()
+    else:
+        mode = load_runtime_config().mode.upper().strip()
+
+    if mode not in VALID_MODES:
         return DEFAULT_MODE
 
-    return value
+    return mode
 
 
 def format_runtime_modes() -> str:

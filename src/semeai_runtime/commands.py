@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
+from semeai_runtime.config import format_runtime_config
 from semeai_runtime.policy import format_policy_registry
 from semeai_runtime.runtime_mode import format_runtime_modes
 from semeai_runtime.session_memory import (
@@ -27,6 +28,17 @@ class CommandSpec:
     description: str
     tool_name: str
     handler: Callable[[str], CommandResult]
+
+
+def config_command(_: str) -> CommandResult:
+    """Inspect runtime configuration."""
+    return CommandResult(
+        handled=True,
+        command_name="/config",
+        output=format_runtime_config(),
+        tool_name="runtime_config",
+        tool_input="active_runtime_config",
+    )
 
 
 def memory_command(_: str) -> CommandResult:
@@ -111,6 +123,12 @@ COMMAND_SPECS: dict[str, CommandSpec] = {
         description="List controlled runtime tools exposed through the command registry.",
         tool_name="runtime_tools",
         handler=unavailable_direct_command,
+    ),
+    "/config": CommandSpec(
+        name="/config",
+        description="Inspect active runtime configuration.",
+        tool_name="runtime_config",
+        handler=config_command,
     ),
     "/mode": CommandSpec(
         name="/mode",
@@ -216,6 +234,9 @@ def handle_command(prompt: str) -> CommandResult:
 
     if prompt == "/tools":
         return tools_command(prompt)
+
+    if prompt == "/config":
+        return COMMAND_SPECS["/config"].handler(prompt)
 
     if prompt == "/mode":
         return COMMAND_SPECS["/mode"].handler(prompt)

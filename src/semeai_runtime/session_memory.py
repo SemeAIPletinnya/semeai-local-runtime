@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from semeai_runtime.config import load_runtime_config
+
 
 MEMORY_PATH = Path("data/memory/session_memory.json")
 
@@ -32,10 +34,11 @@ def append_memory_turn(
     *,
     user: str,
     semeai: str,
-    max_turns: int = 20,
+    max_turns: int | None = None,
 ) -> list[dict[str, Any]]:
     """Append a conversation turn to durable runtime memory."""
     memory = load_session_memory()
+    configured_max_turns = max_turns or load_runtime_config().max_memory_turns
 
     memory.append(
         {
@@ -44,7 +47,7 @@ def append_memory_turn(
         }
     )
 
-    memory = memory[-max_turns:]
+    memory = memory[-configured_max_turns:]
 
     save_session_memory(memory)
 
