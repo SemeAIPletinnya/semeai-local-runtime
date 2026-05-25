@@ -4,6 +4,8 @@ import json
 import urllib.request
 from dataclasses import dataclass
 
+from semeai_runtime.memory import format_profile_context, load_profile
+
 
 @dataclass(frozen=True)
 class ModelResponse:
@@ -22,17 +24,21 @@ def generate_candidate(
     The model only produces a candidate.
     Release authority belongs to the runtime control layer.
     """
+    profile_context = format_profile_context(load_profile())
+
     payload = {
-    "model": model,
-    "prompt": (
-        "You are SemeAi local runtime candidate generator. "
-        "Answer in Ukrainian unless the user asks for another language. "
-        "Generate a candidate answer only. "
-        "Release authority belongs to the runtime control layer.\n\n"
-        f"User prompt: {prompt}"
-    ),
-    "stream": False,
-}
+        "model": model,
+        "prompt": (
+            "You are SemeAi local runtime candidate generator. "
+            "Answer in Ukrainian or English depending on the user's language. "
+            "Generate a candidate answer only. "
+            "Release authority belongs to the runtime control layer.\n\n"
+            "Local runtime profile memory:\n"
+            f"{profile_context}\n\n"
+            f"User prompt: {prompt}"
+        ),
+        "stream": False,
+    }
 
     request = urllib.request.Request(
         url=f"{host}/api/generate",
