@@ -2,15 +2,11 @@ from __future__ import annotations
 
 from uuid import uuid4
 
+from semeai_runtime.commands import handle_command
 from semeai_runtime.control_gate import evaluate_candidate
 from semeai_runtime.model_client import generate_candidate
 from semeai_runtime.runtime_log import write_runtime_event, write_tool_event
-from semeai_runtime.session_memory import (
-    append_memory_turn,
-    format_memory_summary,
-    load_session_memory,
-)
-from semeai_runtime.tools import read_allowed_file
+from semeai_runtime.session_memory import append_memory_turn, load_session_memory
 
 
 EXIT_COMMANDS = {"exit", "quit", "/exit", "/quit"}
@@ -22,46 +18,26 @@ def handle_tool_command(
     session_id: str,
     turn_index: int,
 ) -> bool:
-    """Handle controlled runtime tool commands."""
-    if prompt == "/memory":
-        memory = load_session_memory()
-        result = format_memory_summary(memory)
+    """Handle registered runtime commands."""
+    result = handle_command(prompt)
 
-        write_tool_event(
-            command=prompt,
-            tool_name="memory_inspection",
-            tool_input="persistent_runtime_memory",
-            tool_result=result,
-            session_id=session_id,
-            turn_index=turn_index,
-        )
+    if not result.handled:
+        return False
 
-        print("\nMemory inspection")
-        print("-----------------")
-        print(result)
+    write_tool_event(
+        command=prompt,
+        tool_name=result.tool_name,
+        tool_input=result.tool_input,
+        tool_result=result.output,
+        session_id=session_id,
+        turn_index=turn_index,
+    )
 
-        return True
+    print("\nCommand result")
+    print("--------------")
+    print(result.output)
 
-    if prompt.startswith("/read "):
-        path = prompt[len("/read ") :].strip()
-        result = read_allowed_file(path)
-
-        write_tool_event(
-            command=prompt,
-            tool_name="read_allowed_file",
-            tool_input=path,
-            tool_result=result,
-            session_id=session_id,
-            turn_index=turn_index,
-        )
-
-        print("\nTool result")
-        print("-----------")
-        print(result)
-
-        return True
-
-    return False
+    return True
 
 
 def run_once(
@@ -122,8 +98,7 @@ def main() -> int:
     print("--------------------")
     print(f"Session: {session_id}")
     print("Type 'exit' or 'quit' to stop.")
-    print("Use '/read <path>' for controlled file inspection.")
-    print("Use '/memory' to inspect persistent runtime memory.")
+    print("Use '/help' to see runtime commands.")
 
     if conversation_history:
         print(
