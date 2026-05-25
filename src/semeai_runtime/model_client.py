@@ -14,10 +14,28 @@ class ModelResponse:
     candidate: str
 
 
+def format_conversation_history(history: list[dict[str, str]], max_turns: int = 6) -> str:
+    """Format recent conversation turns as compact runtime context."""
+    if not history:
+        return "No previous conversation turns in this session."
+
+    recent = history[-max_turns:]
+    lines: list[str] = []
+
+    for item in recent:
+        user = item.get("user", "")
+        semeai = item.get("semeai", "")
+        lines.append(f"User: {user}")
+        lines.append(f"SemeAi: {semeai}")
+
+    return "\n".join(lines)
+
+
 def generate_candidate(
     prompt: str,
     model: str = "qwen3:4b",
     host: str = "http://localhost:11434",
+    conversation_history: list[dict[str, str]] | None = None,
 ) -> ModelResponse:
     """Generate a candidate response from a local Ollama model.
 
@@ -25,6 +43,7 @@ def generate_candidate(
     Release authority belongs to the runtime control layer.
     """
     profile_context = format_profile_context(load_profile())
+    history_context = format_conversation_history(conversation_history or [])
 
     payload = {
         "model": model,
@@ -35,7 +54,9 @@ def generate_candidate(
             "Release authority belongs to the runtime control layer.\n\n"
             "Local runtime profile memory:\n"
             f"{profile_context}\n\n"
-            f"User prompt: {prompt}"
+            "Recent conversation history:\n"
+            f"{history_context}\n\n"
+            f"Current user prompt: {prompt}"
         ),
         "stream": False,
     }
