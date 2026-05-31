@@ -149,6 +149,7 @@ config/runtime.json
 - Tool execution mediation demo: [docs/tool_execution_mediation_demo.md](docs/tool_execution_mediation_demo.md)
 - Governance replay analytics: `python tools/governance_replay_analytics.py`
 - Governance state snapshot: `python tools/governance_state_snapshot.py`
+- Release candidate check: [docs/release_candidate_v0_1_0_prealpha.md](docs/release_candidate_v0_1_0_prealpha.md) (`python tools/release_candidate_check.py`)
 
 ## Replay / inspection
 
