@@ -140,6 +140,10 @@ Runtime configuration is stored in:
 config/runtime.json
 ```
 
+## Demos
+
+- Canonical runtime governance demo: [docs/canonical_runtime_governance_demo.md](docs/canonical_runtime_governance_demo.md)
+
 ## Replay / inspection
 
 Runtime events are logged to:
