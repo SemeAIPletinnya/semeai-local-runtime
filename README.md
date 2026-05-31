@@ -144,6 +144,7 @@ config/runtime.json
 
 - Canonical runtime governance demo: [docs/canonical_runtime_governance_demo.md](docs/canonical_runtime_governance_demo.md)
 - Replay inspector for that demo: `python tools/inspect_canonical_runtime_governance_demo.py`
+- Memory admission is mediated by a deterministic local policy in the canonical demo.
 
 ## Replay / inspection
 

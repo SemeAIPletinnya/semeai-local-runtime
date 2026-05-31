@@ -13,6 +13,8 @@ REQUIRED_RECORD_KEYS = {
     "release_decision",
     "memory_admission",
     "reason",
+    "memory_admission_decision",
+    "memory_admission_reason",
 }
 
 
@@ -55,6 +57,19 @@ def test_release_decision_controls_memory_admission(tmp_path) -> None:
     assert admission_by_decision["PROCEED"] is True
     assert admission_by_decision["NEEDS_REVIEW"] is False
     assert admission_by_decision["SILENCE"] is False
+
+
+def test_memory_admission_policy_fields_are_recorded(tmp_path) -> None:
+    output_path = tmp_path / "canonical_runtime_governance_demo.jsonl"
+    demo.run_demo(output_path)
+
+    records = load_jsonl(output_path)
+    safe_record = next(
+        record for record in records if record["case_id"] == "safe_candidate"
+    )
+
+    assert safe_record["memory_admission_decision"] == "ADMIT"
+    assert safe_record["memory_admission_reason"]
 
 
 def test_no_external_network_or_provider_dependency() -> None:

@@ -1,11 +1,18 @@
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+SRC_PATH = REPO_ROOT / "src"
+if str(SRC_PATH) not in sys.path:
+    sys.path.insert(0, str(SRC_PATH))
+
+from semeai_runtime.memory_admission_policy import evaluate_memory_admission
+
 DEFAULT_OUTPUT_PATH = REPO_ROOT / "outputs" / "canonical_runtime_governance_demo.jsonl"
 
 BLOCKED_TERMS = (
@@ -35,6 +42,8 @@ class GovernanceRecord:
     release_decision: str
     memory_admission: bool
     reason: str
+    memory_admission_decision: str
+    memory_admission_reason: str
 
 
 DEMO_CASES = (
@@ -69,21 +78,22 @@ def decide_release(candidate: str) -> tuple[str, str]:
     return "PROCEED", "candidate passed deterministic local release gate"
 
 
-def decide_memory_admission(release_decision: str) -> bool:
-    """Admit memory only after release authority allows the candidate."""
-    return release_decision == "PROCEED"
-
-
 def evaluate_case(demo_case: DemoCase) -> GovernanceRecord:
     release_decision, reason = decide_release(demo_case.candidate)
+    memory_decision = evaluate_memory_admission(
+        candidate=demo_case.candidate,
+        release_decision=release_decision,
+    )
 
     return GovernanceRecord(
         case_id=demo_case.case_id,
         prompt=demo_case.prompt,
         candidate=demo_case.candidate,
         release_decision=release_decision,
-        memory_admission=decide_memory_admission(release_decision),
+        memory_admission=memory_decision.admitted,
         reason=reason,
+        memory_admission_decision=memory_decision.decision,
+        memory_admission_reason=memory_decision.reason,
     )
 
 
