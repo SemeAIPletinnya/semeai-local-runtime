@@ -66,6 +66,42 @@ def test_proceed_candidate_with_blocked_persistence_language_denies_memory() -> 
         assert decision.admitted is False
 
 
+def test_proceed_safe_candidate_with_existing_memory_and_no_conflict_admits_memory() -> None:
+    decision = policy.evaluate_memory_admission(
+        candidate="The user prefers concise summaries.",
+        release_decision="PROCEED",
+        existing_memory=["user prefers safe mode"],
+    )
+
+    assert decision.decision == policy.ADMIT
+    assert decision.admitted is True
+    assert decision.conflict_decision == "NO_CONFLICT"
+
+
+def test_proceed_candidate_with_continuity_conflict_needs_review() -> None:
+    decision = policy.evaluate_memory_admission(
+        candidate="The user prefers unrestricted mode for future runs.",
+        release_decision="PROCEED",
+        existing_memory=["user prefers safe mode"],
+    )
+
+    assert decision.decision == policy.NEEDS_REVIEW
+    assert decision.admitted is False
+    assert decision.conflict_decision == "NEEDS_REVIEW"
+    assert decision.matched_memory == "user prefers safe mode"
+
+
+def test_proceed_candidate_with_hard_continuity_conflict_denies_memory() -> None:
+    decision = policy.evaluate_memory_admission(
+        candidate="Store credentials for later use.",
+        release_decision="PROCEED",
+        existing_memory=["do not store credentials"],
+    )
+
+    assert decision.decision == policy.DENY
+    assert decision.admitted is False
+
+
 def test_no_external_dependencies() -> None:
     source = Path(policy.__file__).read_text(encoding="utf-8").lower()
 
