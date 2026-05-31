@@ -146,6 +146,7 @@ config/runtime.json
 - Replay inspector for that demo: `python tools/inspect_canonical_runtime_governance_demo.py`
 - Memory admission is mediated by a deterministic local policy in the canonical demo.
 - The canonical demo includes deterministic continuity-aware memory conflict checks.
+- Tool execution mediation demo: [docs/tool_execution_mediation_demo.md](docs/tool_execution_mediation_demo.md)
 
 ## Replay / inspection
 
