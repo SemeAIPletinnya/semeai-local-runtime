@@ -148,6 +148,7 @@ config/runtime.json
 - The canonical demo includes deterministic continuity-aware memory conflict checks.
 - Tool execution mediation demo: [docs/tool_execution_mediation_demo.md](docs/tool_execution_mediation_demo.md)
 - Governance replay analytics: `python tools/governance_replay_analytics.py`
+- Governance state snapshot: `python tools/governance_state_snapshot.py`
 
 ## Replay / inspection
 
