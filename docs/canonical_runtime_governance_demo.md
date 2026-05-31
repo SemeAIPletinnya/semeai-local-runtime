@@ -91,6 +91,20 @@ Each record includes:
 - `memory_admission`
 - `reason`
 
+## Inspect with the replay inspector
+
+Command:
+
+```powershell
+python tools/inspect_canonical_runtime_governance_demo.py
+```
+
+Optional input:
+
+```powershell
+python tools/inspect_canonical_runtime_governance_demo.py --input outputs/canonical_runtime_governance_demo.jsonl
+```
+
 ## Why memory admission is separate
 
 Generation creates a candidate. The release gate decides whether the candidate is
