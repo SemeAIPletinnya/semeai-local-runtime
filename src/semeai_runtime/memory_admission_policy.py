@@ -2,6 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from semeai_runtime.memory_conflict_policy import (
+    CONFLICT,
+    NO_CONFLICT,
+    evaluate_memory_conflict,
+)
+
 
 ADMIT = "ADMIT"
 NEEDS_REVIEW = "NEEDS_REVIEW"
@@ -27,12 +33,16 @@ class MemoryAdmissionDecision:
     admitted: bool
     reason: str
     release_decision: str
+    conflict_decision: str = NO_CONFLICT
+    conflict_reason: str | None = None
+    matched_memory: str | None = None
 
 
 def evaluate_memory_admission(
     *,
     candidate: str,
     release_decision: str,
+    existing_memory: list[str] | tuple[str, ...] | None = None,
 ) -> MemoryAdmissionDecision:
     """Evaluate deterministic local memory admission for a candidate."""
     if release_decision != PROCEED:
@@ -59,6 +69,33 @@ def evaluate_memory_admission(
             admitted=False,
             reason="candidate contains uncertainty or unsupported-memory language",
             release_decision=release_decision,
+        )
+
+    conflict_decision = evaluate_memory_conflict(
+        candidate=candidate,
+        existing_memory=existing_memory or (),
+    )
+
+    if conflict_decision.decision == CONFLICT:
+        return MemoryAdmissionDecision(
+            decision=DENY,
+            admitted=False,
+            reason=conflict_decision.reason,
+            release_decision=release_decision,
+            conflict_decision=conflict_decision.decision,
+            conflict_reason=conflict_decision.reason,
+            matched_memory=conflict_decision.matched_memory,
+        )
+
+    if conflict_decision.decision == NEEDS_REVIEW:
+        return MemoryAdmissionDecision(
+            decision=NEEDS_REVIEW,
+            admitted=False,
+            reason=conflict_decision.reason,
+            release_decision=release_decision,
+            conflict_decision=conflict_decision.decision,
+            conflict_reason=conflict_decision.reason,
+            matched_memory=conflict_decision.matched_memory,
         )
 
     return MemoryAdmissionDecision(

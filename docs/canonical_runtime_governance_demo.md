@@ -36,11 +36,12 @@ or prove that these simple rules are sufficient for production systems.
 
 ## Canonical flow
 
-The demo runs three deterministic cases:
+The demo runs four deterministic cases:
 
 1. A safe candidate returns `PROCEED` and memory admission is allowed.
 2. An uncertain or risky candidate returns `NEEDS_REVIEW` and memory admission is denied.
 3. A blocked candidate returns `SILENCE` and memory admission is denied.
+4. A continuity conflict candidate returns `PROCEED` from release but is held as `NEEDS_REVIEW` by memory admission.
 
 The release gate uses simple local string rules:
 
@@ -63,6 +64,20 @@ the candidate.
 This keeps the demonstration aligned with the boundary that memory is not
 persistence authority. The policy is small, deterministic, local, and no-key; it
 is not a production memory system.
+
+## Continuity conflict evaluation
+
+Memory admission can optionally consider existing memory state before admitting a
+new persistence candidate. In this demo, conflict detection is deterministic,
+local, and limited to a few simple string-pattern checks.
+
+If a candidate contradicts an existing persistence preference, the memory
+admission layer either holds it for review or denies it. For example, a candidate
+that says the user prefers unrestricted mode is held for review when existing
+memory says the user prefers safe mode.
+
+This is a continuity-aware governance primitive for the demo, not a
+production-grade memory truth system.
 
 ## Run on Windows PowerShell
 

@@ -29,6 +29,12 @@ FIXTURE_RECORDS = (
         "memory_admission": False,
         "reason": "candidate contains blocked operational bypass language",
     },
+    {
+        "case_id": "continuity_conflict_candidate",
+        "release_decision": "PROCEED",
+        "memory_admission": False,
+        "reason": "candidate passed deterministic local release gate",
+    },
 )
 
 
@@ -56,12 +62,12 @@ def test_inspector_summarizes_counts_correctly(tmp_path) -> None:
     result = run_inspector(fixture_path)
 
     assert result.returncode == 0
-    assert "total records: 3" in result.stdout
-    assert "PROCEED count: 1" in result.stdout
+    assert "total records: 4" in result.stdout
+    assert "PROCEED count: 2" in result.stdout
     assert "NEEDS_REVIEW count: 1" in result.stdout
     assert "SILENCE count: 1" in result.stdout
     assert "memory admitted count: 1" in result.stdout
-    assert "memory denied count: 2" in result.stdout
+    assert "memory denied count: 3" in result.stdout
     assert (
         "safe_candidate | PROCEED | admitted | "
         "candidate passed deterministic local release gate"
