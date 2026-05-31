@@ -49,7 +49,20 @@ The release gate uses simple local string rules:
 - otherwise, the candidate returns `PROCEED`.
 
 Memory admission is intentionally separate from generation and release. It is
-allowed only when the release decision is `PROCEED`.
+evaluated by a deterministic local memory admission policy after the release gate.
+
+## Memory admission policy
+
+Release approval does not automatically mean persistence should happen. The demo
+evaluates memory admission with a separate deterministic local policy after the
+release gate has made its decision. If release does not return `PROCEED`, memory
+admission is denied. If release does return `PROCEED`, the local policy still
+checks for uncertainty language and blocked persistence requests before admitting
+the candidate.
+
+This keeps the demonstration aligned with the boundary that memory is not
+persistence authority. The policy is small, deterministic, local, and no-key; it
+is not a production memory system.
 
 ## Run on Windows PowerShell
 
@@ -90,6 +103,8 @@ Each record includes:
 - `release_decision`
 - `memory_admission`
 - `reason`
+- `memory_admission_decision`
+- `memory_admission_reason`
 
 ## Inspect with the replay inspector
 
